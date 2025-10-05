@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  back_tghr_department:
+    build:
+      context: .
+    ports:
+      - "8070:8070"
+    volumes:
+      - .:/app
+    networks:
+      - database_network
+
+networks:
+  database_network:
+    external: true
