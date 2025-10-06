@@ -85,7 +85,7 @@ async def full_statistics(
 
     avg_duration_minutes — среднее время на точку за весь период
     """
-    # --- Подзапрос: последний статус каждой точки через оконную функцию ---
+
     latest_status_subq = (
         select(
             RoutePointStatusLog.point_id,

@@ -15,11 +15,10 @@ from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/routes", tags=["Маршруты"])
 
-# Асинхронная функция для получения первой машины пользователя
+
 async def get_user_vehicle(db: AsyncSession, user_id: int) -> Vehicle | None:
     result = await db.execute(select(Vehicle).where(Vehicle.owner_id == user_id))
     return result.scalars().first()
-
 
 
 # Создать маршрут на день для автомобиля пользователя
@@ -721,7 +720,10 @@ async def geocode(address: str):
             data = response.json()
             
             if not data:
-                raise HTTPException(status_code=404, detail="Address not found")
+                lat = float(0)
+                lon = float(0)
+            
+                return lat, lon
             
             lat = float(data[0]["lat"])
             lon = float(data[0]["lon"])

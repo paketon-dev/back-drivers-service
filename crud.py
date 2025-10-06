@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models import RoutePlan, RoutePoint, User, Vehicle, LogEntry
-from schemas.schemas import UserCreate, VehicleCreate, LogCreate
+from schemas.schemas import UserCreate, UserUpdate, VehicleCreate, LogCreate
 from auth import get_password_hash
 from sqlalchemy.orm import selectinload
 
@@ -26,6 +26,35 @@ async def create_user(db: AsyncSession, user: UserCreate):
     await db.refresh(db_user)
     return db_user
 
+
+async def update_user(db: AsyncSession, user: UserUpdate):
+    db_user = await db.execute(select(User).where(User.id == user.id))
+    db_user = db_user.scalar_one_or_none()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    if user.username:
+        db_user.username = user.username
+    if user.first_name:
+        db_user.first_name = user.first_name
+    if user.last_name:
+        db_user.last_name = user.last_name
+    if user.middle_name:
+        db_user.middle_name = user.middle_name
+    if user.rate is not None:
+        db_user.rate = user.rate
+    if user.is_active is not None:
+        db_user.is_active = user.is_active
+    if user.transport_company_id is not None:
+        db_user.transport_company_id = user.transport_company_id
+    if user.tariff_id is not None:
+        db_user.tariff_id = user.tariff_id
+
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
 
 # VEHICLES
 async def create_vehicle(db: AsyncSession, user_id: int, vehicle: VehicleCreate):

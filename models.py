@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
-    Boolean, Column, Integer, String, ForeignKey, DateTime, Float, Enum
+    Boolean, Column, Integer, String, ForeignKey, DateTime, Float, Enum, Table
 )
 from sqlalchemy.orm import relationship, declarative_base
 import enum
@@ -20,11 +20,14 @@ class User(Base):
     middle_name = Column(String, nullable=True)
     rate = Column(Float, nullable=True)
     is_active = Column(Boolean, default=True)
+    transport_company_id = Column(Integer, ForeignKey("transport_companies.id"), nullable=True)
+    tariff_id = Column(Integer, ForeignKey("tariffs.id"), nullable=True)
 
     vehicles = relationship("Vehicle", back_populates="owner")
-    tariffs = relationship("Tariff", back_populates="user")
-    transport_company = relationship("TransportCompany", back_populates="user", uselist=False)
+    transport_company = relationship("TransportCompany", back_populates="users")
+    tariff = relationship("Tariff", back_populates="users")
 
+    vehicles = relationship("Vehicle", back_populates="owner")
 
 # ===================== Тип юридического лица =====================
 class LegalEntityType(Base):
@@ -47,10 +50,9 @@ class TransportCompany(Base):
     contacts = Column(String, nullable=True)
 
     legal_entity_type_id = Column(Integer, ForeignKey("legal_entity_types.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
 
     legal_entity_type = relationship("LegalEntityType", back_populates="companies")
-    user = relationship("User", back_populates="transport_company")
+    users = relationship("User", back_populates="transport_company")
 
 
 # ===================== Транспортное средство =====================
@@ -120,6 +122,9 @@ class RoutePlan(Base):
     notes = Column(String, nullable=True)
 
     delivery_type_id = Column(Integer, ForeignKey("delivery_types.id"), nullable=True)
+    
+    start_datetime = Column(DateTime(timezone=True), nullable=True)
+    end_datetime = Column(DateTime(timezone=True), nullable=True)
 
     vehicle = relationship("Vehicle", back_populates="route_plans")
     delivery_type = relationship("DeliveryType", back_populates="routes")
@@ -229,5 +234,5 @@ class Tariff(Base):
     body_type = Column(String, nullable=True)
     description = Column(String, nullable=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="tariffs")
+    users = relationship("User", back_populates="tariff")
+

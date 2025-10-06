@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from database.database_app import create_db_if_not_exists, create_tables
 from migration import run_auto_migrations
 from fastapi.middleware.cors import CORSMiddleware
-from routers import stats, users, vehicles, logs, auth, trail
+from routers import addresses, deliveryTypes, legalEntities, stats, tariffs, transportCompanies, users, vehicles, logs, auth, trail, stores
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete
@@ -35,6 +35,12 @@ app.include_router(vehicles.router)
 app.include_router(logs.router)
 app.include_router(trail.router)
 app.include_router(stats.router)
+app.include_router(addresses.router)
+app.include_router(stores.router)
+app.include_router(legalEntities.router)
+app.include_router(deliveryTypes.router)
+app.include_router(transportCompanies.router)
+app.include_router(tariffs.router)
 
 app.add_middleware(
     CORSMiddleware,
