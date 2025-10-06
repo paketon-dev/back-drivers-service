@@ -8,10 +8,11 @@ from routers.auth import get_current_user
 from models import Address, RoutePointStatusLog, RouteStatusEnum, Vehicle, RoutePlan, RoutePoint, User
 from crud import create_route_plan, add_route_point
 from datetime import date, datetime
-from schemas.schemas import PointStatusUpdate
+from schemas.schemas import PointStatusUpdate, RouteDateUpdate
 from sqlalchemy import func, or_
 import bcrypt
 from sqlalchemy.orm import selectinload
+from fastapi import Body
 
 router = APIRouter(prefix="/routes", tags=["Маршруты"])
 
@@ -161,6 +162,40 @@ async def add_point_today(
         order=order
     )
 
+
+@router.patch("/{route_id}/datetime", summary="Установить start_datetime или end_datetime маршрута")
+async def update_route_datetime(
+    route_id: int,
+    data: RouteDateUpdate = Body(...),
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(RoutePlan)
+        .options(selectinload(RoutePlan.vehicle))
+        .where(RoutePlan.id == route_id)
+    )
+    route = result.scalars().first()
+    if not route:
+        raise HTTPException(status_code=404, detail="Маршрут не найден")
+    
+    if route.vehicle.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Нет доступа к этому маршруту")
+    
+    updated = False
+    if data.start_datetime:
+        route.start_datetime = data.start_datetime
+        updated = True
+    if data.end_datetime:
+        route.end_datetime = data.end_datetime
+        updated = True
+    
+    if updated:
+        db.add(route)
+        await db.commit()
+        await db.refresh(route)
+    
+    return route
 
 
 @router.post("/users/{user_id}/points", summary="Создать точку маршрута для пользователя по ID")

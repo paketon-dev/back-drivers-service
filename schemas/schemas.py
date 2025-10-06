@@ -73,6 +73,10 @@ class LogOut(BaseModel):
 
 
 
+class RouteDateUpdate(BaseModel):
+    start_datetime: datetime | None = None
+    end_datetime: datetime | None = None
+    
 class PointStatusUpdate(BaseModel):
     new_status: RoutePointStatusEnum
     lat: Optional[float] = None
