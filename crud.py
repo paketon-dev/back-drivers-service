@@ -8,15 +8,12 @@ from sqlalchemy.orm import selectinload
 
 # USERS
 async def create_user(db: AsyncSession, user: UserCreate):
-    # Check if the username already exists
     existing_user = await db.execute(select(User).filter(User.username == user.username))
     existing_user = existing_user.scalar_one_or_none()
 
     if existing_user:
-        # Raise an error if the username already exists
         raise HTTPException(status_code=400, detail="Username already taken")
 
-    # If the username is available, create the new user
     db_user = User(    username=user.username,
     hashed_password=get_password_hash(user.password),
     first_name=user.first_name,
@@ -44,13 +41,10 @@ from zoneinfo import ZoneInfo
 from datetime import datetime
 
 async def create_log(db: AsyncSession, vehicle_id: int, log: LogCreate):
-    # Получаем текущее время с учётом часового пояса Барнаула
     barnaul_time = datetime.now(ZoneInfo("Asia/Barnaul"))
     
-    # Записываем лог с учётом времени в Барнауле
     db_log = LogEntry(vehicle_id=vehicle_id, timestamp=barnaul_time, **log.dict())
     
-    # Добавляем и сохраняем лог
     db.add(db_log)
     await db.commit()
     await db.refresh(db_log)
@@ -79,7 +73,7 @@ async def add_route_point(
     doc: str,
     payment: float,
     counterparty: str,
-    address: str,
+    address_obj,
     note: str = None,
     order: int | None = None
 ):
@@ -107,12 +101,14 @@ async def add_route_point(
         doc=doc,
         payment=payment,
         counterparty=counterparty,
-        address=address,
+        address_id=address_obj.id,
         order=order,
         arrival_time=None,
         departure_time=None,
         duration_minutes=None,
-        note=note
+        note=note,
+        latitude=address_obj.latitude,
+        longitude=address_obj.longitude,
     )
 
     db.add(point)

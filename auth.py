@@ -6,12 +6,10 @@ SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-
-def get_password_hash(password: str):
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
-
 
 def verify_password(plain, hashed):
     return pwd_context.verify(plain, hashed)

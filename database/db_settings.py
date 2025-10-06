@@ -15,7 +15,7 @@ settings.POSTGRES_HOST = 'postgres_db'
 settings.POSTGRES_PORT = 5432
 settings.POSTGRES_PASSWORD = 'root'
 settings.POSTGRES_USER = 'root' 
-settings.POSTGRES_DB = 'transportqff'
+settings.POSTGRES_DB = 'driverss'
     
 # settings = Settings()
 # settings.POSTGRES_HOST = 'localhost' 

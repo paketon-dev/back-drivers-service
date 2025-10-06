@@ -11,7 +11,6 @@ router = APIRouter(prefix="/vehicles", tags=["Транспортные сред�
 # Добавление автомобиля
 @router.post("/", response_model=VehicleOut)
 async def add_vehicle(vehicle: VehicleCreate, db: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user)):
-    # Извлекаем user_id из текущего пользователя, полученного из токена
     user_id = current_user.id
     return await create_vehicle(db, user_id, vehicle)
 
@@ -23,7 +22,6 @@ async def add_vehicle_for_user(user_id: int, vehicle: VehicleCreate, db: AsyncSe
 # Добавление лога для автомобиля
 @router.post("/{vehicle_id}/logs", response_model=LogOut)
 async def add_log(vehicle_id: int, log: LogCreate, db: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user)):
-    # Извлекаем user_id из текущего пользователя, полученного из токена
     user_id = current_user.id
     return await create_log(db, vehicle_id, log, user_id)
 
@@ -31,6 +29,5 @@ async def add_log(vehicle_id: int, log: LogCreate, db: AsyncSession = Depends(ge
 # Получение логов для автомобиля
 @router.get("/{vehicle_id}/logs", response_model=list[LogOut])
 async def get_logs(vehicle_id: int, db: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user)):
-    # Извлекаем user_id из текущего пользователя, полученного из токена
     user_id = current_user.id
     return await get_vehicle_logs(db, vehicle_id, user_id)

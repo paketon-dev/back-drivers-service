@@ -6,15 +6,15 @@ from database.database_app import get_session
 from models import User
 from auth import verify_password, create_access_token  
 from datetime import timedelta
+from auth import SECRET_KEY, ALGORITHM
+from jose import JWTError, jwt
 
 router = APIRouter(prefix="/auth", tags=["Авторизация"])
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
-    # Ищем пользователя в базе
     result = await db.execute(select(User).where(User.username == form_data.username))
     user = result.scalar_one_or_none()
     if not user or not verify_password(form_data.password, user.hashed_password):
@@ -24,18 +24,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Генерируем токен
     access_token_expires = timedelta(minutes=60)
     access_token = create_access_token(
-        data={"sub": str(user.id)},  # sub = user_id
+        data={"sub": str(user.id)}, 
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-from models import User
-from auth import SECRET_KEY, ALGORITHM
-from jose import JWTError, jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_session)):
     """Проверка и декодирование токена, возврат текущего пользователя"""
@@ -52,7 +48,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     except JWTError:
         raise credentials_exception
 
-    # Ищем пользователя в базе
     result = await db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
     if user is None:
