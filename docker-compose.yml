@@ -11,6 +11,19 @@ services:
     networks:
       - database_network
 
+
+  postgres_db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - database_network
+      
 networks:
   database_network:
     external: true
