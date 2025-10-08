@@ -440,7 +440,11 @@ async def get_today_route(
         select(RoutePlan)
         .join(RoutePlan.vehicle)
         .where(RoutePlan.date == date.today(), RoutePlan.vehicle.has(owner_id=current_user.id))
-        .options(selectinload(RoutePlan.points), selectinload(RoutePlan.vehicle))
+        .options(
+    selectinload(RoutePlan.points).selectinload(RoutePoint.address),  # Путь от RoutePlan через RoutePoint к Address
+    selectinload(RoutePlan.vehicle)
+)
+
     )
     route = result.scalars().first()
     
@@ -448,6 +452,8 @@ async def get_today_route(
         raise HTTPException(status_code=404, detail="Маршрут на сегодня не найден")
     
     return route
+
+
 
 # Получить маршрут по id (динамический)
 @router.get("/{route_id}", summary="Получить маршрут по ID с точками и водителем")

@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  back_tghr_department:
+  back_drivers:
     build:
       context: .
     ports:
-      - "8070:8070"
+      - "8072:8072"
     volumes:
       - .:/app
     networks:
