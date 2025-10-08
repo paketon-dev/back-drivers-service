@@ -1,7 +1,8 @@
-version: '3.8'
+version: '1.0'
 
 services:
-  back_drivers:
+  drivers_api:
+    container_name: drivers_api_container
     build:
       context: .
     ports:
@@ -9,21 +10,25 @@ services:
     volumes:
       - .:/app
     networks:
-      - database_network
+      - drivers_network
 
-
-  postgres_db:
-    image: postgres
+  drivers_db:
+    container_name: drivers_db_container
+    image: postgres:15
     restart: always
     shm_size: 128mb
+    volumes:
+      - drivers_db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      POSTGRES_DB: delivery_system
     networks:
-      - database_network
-      
+      - drivers_network
+
+volumes:
+  drivers_db_data:
+
 networks:
-  database_network:
-    external: true
+  drivers_network:
+    driver: bridge

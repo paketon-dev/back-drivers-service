@@ -11,7 +11,7 @@ class Settings:
     POSTGRES_DB: str
 
 settings = Settings()
-settings.POSTGRES_HOST = 'postgres_db'
+settings.POSTGRES_HOST = 'drivers_db'
 settings.POSTGRES_PORT = 5432
 settings.POSTGRES_PASSWORD = 'root'
 settings.POSTGRES_USER = 'root' 
