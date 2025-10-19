@@ -212,53 +212,69 @@ async def clear_database(db: AsyncSession = Depends(get_session)):
 
 
 
+from sqlalchemy import or_
+
+
+def dict_keys_to_camel_case(obj):
+
+    if isinstance(obj, list):
+        return [dict_keys_to_camel_case(i) for i in obj]
+    elif isinstance(obj, dict):
+        new_obj = {}
+        for k, v in obj.items():
+            new_key = k[0].upper() + k[1:] if k else k
+            new_obj[new_key] = dict_keys_to_camel_case(v)
+        return new_obj
+    else:
+        return obj
+
+
 @app.get("/get_changes", summary="Получить объекты, созданные или изменённые после даты")
 async def get_changes(
-    since: datetime = Query(..., description="Дата и время для фильтрации в формате 2025-10-19T10:00:00"),
+    since: datetime,
     db: AsyncSession = Depends(get_session)
 ):
     results = {}
 
     models_to_check = {
-        "directories": { 
-            "users": User,
-            "vehicles": Vehicle,
-            "transport_companies": TransportCompany,
-            "addresses": Address,
-            "stores": Store,
-            "tariffs": Tariff,
-            "loading_places": LoadingPlace,
+        "Directories": { 
+            "Users": User,
+            "Vehicles": Vehicle,
+            "TransportCompanies": TransportCompany,
+            "Addresses": Address,
+            "Stores": Store,
+            "Tariffs": Tariff,
+            "Loading_places": LoadingPlace,
         },
-        "static_directories": {  
-            "legal_entity_types": LegalEntityType,
-            "delivery_types": DeliveryType,
-            "status_enums": StatusEnum,
-            "route_status_enums": RouteStatusEnum,
-            "route_point_status_enums": RoutePointStatusEnum,
+        "Static_directories": {  
+            "LegalEntityTypes": LegalEntityType,
+            "DeliveryTypes": DeliveryType
         },
-        "documents": { 
-            "route_plans": RoutePlan,
-            "route_points": RoutePoint,
-            "loadings": Loading,
-            "log_entries": LogEntry,
-            "route_point_status_logs": RoutePointStatusLog,
-            "loading_status_logs": LoadingStatusLog,
+        "Documents": { 
+            "RoutePlans": RoutePlan,
+            "RoutePoints": RoutePoint,
+            "Loadings": Loading,
+            "LogEntries": LogEntry,
+            "RoutePointStatusLogs": RoutePointStatusLog,
+            "LoadingStatusLogs": LoadingStatusLog,
         }
     }
 
-
-    for key, model in models_to_check.items():
-        query = await db.execute(
-            select(model).filter(
-                or_(
-                    model.createDateTime > since,
-                    model.changeDateTime > since
+    for section_name, section_models in models_to_check.items():
+        results[section_name] = {}
+        for model_name, model_class in section_models.items():
+            query = await db.execute(
+                select(model_class).filter(
+                    or_(
+                        model_class.createDateTime > since,
+                        model_class.changeDateTime > since
+                    )
                 )
             )
-        )
-        results[key] = [obj.__dict__ for obj in query.scalars().all()]
-
-        for obj in results[key]:
-            obj.pop("_sa_instance_state", None)
+            objs = [obj.__dict__ for obj in query.scalars().all()]
+            for obj in objs:
+                obj.pop("_sa_instance_state", None)
+            results[section_name][model_name] = dict_keys_to_camel_case(objs)
+            
 
     return results

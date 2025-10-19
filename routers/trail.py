@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import List
 import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy import select
