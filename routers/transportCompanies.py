@@ -5,6 +5,7 @@ from database.database_app import get_session
 from models import TransportCompany
 from schemas.schemas import TransportCompanyCreate, TransportCompanyOut
 from sqlalchemy.orm import selectinload
+from uuid import UUID
 
 router = APIRouter(prefix="/transport-companies", tags=["Транспортные компании"])
 
@@ -16,7 +17,7 @@ async def get_companies(db: AsyncSession = Depends(get_session)):
 
 
 @router.get("/{company_id}", response_model=TransportCompanyOut, summary="Получить транспортную компанию по ID")
-async def get_company(company_id: int, db: AsyncSession = Depends(get_session)):
+async def get_company(company_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(TransportCompany).where(TransportCompany.id == company_id))
     company = result.scalar_one_or_none()
     if not company:
@@ -47,7 +48,7 @@ async def create_company(company: TransportCompanyCreate, db: AsyncSession = Dep
     return db_company
 
 @router.put("/{company_id}", response_model=TransportCompanyOut, summary="Обновить транспортную компанию")
-async def update_company(company_id: int, company: TransportCompanyCreate, db: AsyncSession = Depends(get_session)):
+async def update_company(company_id: UUID, company: TransportCompanyCreate, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(TransportCompany).where(TransportCompany.id == company_id))
     db_company = result.scalar_one_or_none()
     if not db_company:
@@ -62,7 +63,7 @@ async def update_company(company_id: int, company: TransportCompanyCreate, db: A
 
 
 @router.delete("/{company_id}", summary="Удалить транспортную компанию")
-async def delete_company(company_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_company(company_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(TransportCompany).where(TransportCompany.id == company_id))
     db_company = result.scalar_one_or_none()
     if not db_company:

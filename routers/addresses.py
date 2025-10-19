@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from database.database_app import get_session
 from models import Address
 from schemas.schemas import AddressCreate, AddressOut
+from uuid import UUID
 
 router = APIRouter(prefix="/addresses", tags=["Адреса"])
 
@@ -15,7 +16,7 @@ async def get_addresses(db: AsyncSession = Depends(get_session)):
 
 
 @router.get("/{address_id}", response_model=AddressOut, summary="Получить адрес по ID")
-async def get_address(address_id: int, db: AsyncSession = Depends(get_session)):
+async def get_address(address_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Address).where(Address.id == address_id))
     address = result.scalar_one_or_none()
     if not address:
@@ -33,7 +34,7 @@ async def create_address(address: AddressCreate, db: AsyncSession = Depends(get_
 
 
 @router.put("/{address_id}", response_model=AddressOut, summary="Обновить адрес")
-async def update_address(address_id: int, address: AddressCreate, db: AsyncSession = Depends(get_session)):
+async def update_address(address_id: UUID, address: AddressCreate, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Address).where(Address.id == address_id))
     db_address = result.scalar_one_or_none()
     if not db_address:
@@ -49,7 +50,7 @@ async def update_address(address_id: int, address: AddressCreate, db: AsyncSessi
 
 
 @router.delete("/{address_id}", summary="Удалить адрес")
-async def delete_address(address_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_address(address_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Address).where(Address.id == address_id))
     db_address = result.scalar_one_or_none()
     if not db_address:

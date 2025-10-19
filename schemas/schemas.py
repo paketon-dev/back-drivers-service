@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
 from models import RoutePointStatusEnum, StatusEnum
-
+from uuid import UUID
 
 class UserCreate(BaseModel):
     username: str
@@ -11,32 +11,32 @@ class UserCreate(BaseModel):
     middle_name: str
     rate: float
     password: str
-    transport_company_id: Optional[int] = None
-    tariff_id: Optional[int] = None
+    transport_company_id: Optional[UUID] = None
+    tariff_id: Optional[UUID] = None
 
 class UserUpdate(BaseModel):
-    id: int
+    id: UUID
     username: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     middle_name: Optional[str] = None
     rate: Optional[float] = None
     is_active: Optional[bool] = None  
-    transport_company_id: Optional[int] = None
-    tariff_id: Optional[int] = None
+    transport_company_id: Optional[UUID] = None
+    tariff_id: Optional[UUID] = None
 
     class Config:
         orm_mode = True
 
 class UserOut(BaseModel):
-    id: int
+    id: UUID
     username: str
     first_name: str
     last_name: str
     middle_name: str
     rate: float
-    transport_company_id: Optional[int] = None
-    tariff_id: Optional[int] = None
+    transport_company_id: Optional[UUID] = None
+    tariff_id: Optional[UUID] = None
 
     class Config:
         orm_mode = True
@@ -49,7 +49,7 @@ class VehicleCreate(BaseModel):
 
 
 class VehicleOut(BaseModel):
-    id: int
+    id: UUID
     plate_number: str
     model: str
     class Config:
@@ -63,7 +63,7 @@ class LogCreate(BaseModel):
 
 
 class LogOut(BaseModel):
-    id: int
+    id: UUID
     status: StatusEnum
     latitude: Optional[float]
     longitude: Optional[float]
@@ -107,7 +107,7 @@ class AddressCreate(AddressBase):
 
 
 class AddressOut(AddressBase):
-    id: int
+    id: UUID
 
     class Config:
         orm_mode = True
@@ -117,7 +117,7 @@ class AddressOut(AddressBase):
 class StoreBase(BaseModel):
     uuid_1c: str
     name_1c: str
-    address_id: Optional[int] = None
+    address_id: Optional[UUID] = None
 
 
 class StoreCreate(StoreBase):
@@ -125,7 +125,7 @@ class StoreCreate(StoreBase):
 
 
 class StoreOut(StoreBase):
-    id: int
+    id: UUID
     address: Optional[AddressOut] = None
 
     class Config:
@@ -142,7 +142,7 @@ class DeliveryTypeCreate(DeliveryTypeBase):
 
 
 class DeliveryTypeOut(DeliveryTypeBase):
-    id: int
+    id: UUID
 
     class Config:
         orm_mode = True
@@ -158,7 +158,7 @@ class LegalEntityTypeCreate(LegalEntityTypeBase):
 
 
 class LegalEntityTypeOut(LegalEntityTypeBase):
-    id: int
+    id: UUID
 
     class Config:
         orm_mode = True
@@ -178,7 +178,7 @@ class TransportCompanyCreate(TransportCompanyBase):
 
 
 class TransportCompanyOut(TransportCompanyBase):
-    id: int
+    id: UUID
     legal_entity_type: Optional[LegalEntityTypeOut] = None
 
     class Config:
@@ -202,7 +202,7 @@ class TariffCreate(TariffBase):
 
 
 class TariffOut(TariffBase):
-    id: int
+    id: UUID
 
     class Config:
         orm_mode = True

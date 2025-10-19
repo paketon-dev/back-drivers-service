@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from database.database_app import get_session
 from models import Store
 from schemas.schemas import StoreCreate, StoreOut
+from uuid import UUID
 
 router = APIRouter(prefix="/stores", tags=["Магазины"])
 
@@ -14,7 +15,7 @@ async def get_stores(db: AsyncSession = Depends(get_session)):
     return result.scalars().all()
 
 @router.get("/stores/{store_id}", summary="Получить магазин по ID")
-async def get_store(store_id: int, db: AsyncSession = Depends(get_session)):
+async def get_store(store_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Store).where(Store.id == store_id))
     store = result.scalar_one_or_none()
     if not store:
@@ -35,7 +36,7 @@ async def create_store(store: StoreCreate, db: AsyncSession = Depends(get_sessio
 
 
 @router.put("/stores/{store_id}", summary="Обновить магазин")
-async def update_store(store_id: int, store: StoreCreate, db: AsyncSession = Depends(get_session)):
+async def update_store(store_id: UUID, store: StoreCreate, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Store).where(Store.id == store_id))
     db_store = result.scalar_one_or_none()
     if not db_store:
@@ -47,7 +48,7 @@ async def update_store(store_id: int, store: StoreCreate, db: AsyncSession = Dep
     return db_store
 
 @router.delete("/stores/{store_id}", summary="Удалить магазин")
-async def delete_store(store_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_store(store_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Store).where(Store.id == store_id))
     db_store = result.scalar_one_or_none()
     if not db_store:

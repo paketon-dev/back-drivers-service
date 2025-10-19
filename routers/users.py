@@ -6,6 +6,7 @@ from schemas.schemas import UserCreate, UserOut, UserUpdate
 from models import User
 from crud import create_user, update_user
 from sqlalchemy.orm import joinedload
+from uuid import UUID
 
 router = APIRouter(prefix="/users", tags=["Пользователи"])
 
@@ -26,7 +27,7 @@ async def get_users(db: AsyncSession = Depends(get_session)):
 
 
 @router.get("/{user_id}", response_model=UserOut, summary="Получить пользователя по ID", description="Возвращает данные пользователя по его ID, включая связанную информацию о транспортной компании и тарифе")
-async def get_user(user_id: int, db: AsyncSession = Depends(get_session)):
+async def get_user(user_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(
         select(User)
         .options(

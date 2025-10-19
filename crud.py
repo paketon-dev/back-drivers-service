@@ -5,6 +5,8 @@ from models import RoutePlan, RoutePoint, User, Vehicle, LogEntry
 from schemas.schemas import UserCreate, UserUpdate, VehicleCreate, LogCreate
 from auth import get_password_hash
 from sqlalchemy.orm import selectinload
+from uuid import UUID
+
 
 # USERS
 async def create_user(db: AsyncSession, user: UserCreate):
@@ -57,7 +59,7 @@ async def update_user(db: AsyncSession, user: UserUpdate):
     return db_user
 
 # VEHICLES
-async def create_vehicle(db: AsyncSession, user_id: int, vehicle: VehicleCreate):
+async def create_vehicle(db: AsyncSession, user_id: UUID, vehicle: VehicleCreate):
     db_vehicle = Vehicle(**vehicle.dict(), owner_id=user_id)
     db.add(db_vehicle)
     await db.commit()
@@ -69,7 +71,7 @@ async def create_vehicle(db: AsyncSession, user_id: int, vehicle: VehicleCreate)
 from zoneinfo import ZoneInfo
 from datetime import datetime
 
-async def create_log(db: AsyncSession, vehicle_id: int, log: LogCreate):
+async def create_log(db: AsyncSession, vehicle_id: UUID, log: LogCreate):
     barnaul_time = datetime.now(ZoneInfo("Asia/Barnaul"))
     
     db_log = LogEntry(vehicle_id=vehicle_id, timestamp=barnaul_time, **log.dict())
@@ -80,15 +82,13 @@ async def create_log(db: AsyncSession, vehicle_id: int, log: LogCreate):
     return db_log
 
 
-async def get_vehicle_logs(db: AsyncSession, vehicle_id: int):
+async def get_vehicle_logs(db: AsyncSession, vehicle_id: UUID):
     result = await db.execute(select(LogEntry).where(LogEntry.vehicle_id == vehicle_id))
     return result.scalars().all()
 
 
-
-
 # Создать маршрут для автомобиля
-async def create_route_plan(db: AsyncSession, vehicle_id: int, date: datetime, notes: str = None):
+async def create_route_plan(db: AsyncSession, vehicle_id: UUID, date: datetime, notes: str = None):
     plan = RoutePlan(vehicle_id=vehicle_id, date=date, notes=notes)
     db.add(plan)
     await db.commit()

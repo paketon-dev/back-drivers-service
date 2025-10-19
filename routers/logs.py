@@ -6,11 +6,12 @@ from routers.auth import get_current_user
 from schemas.schemas import LogCreate, LogOut
 from models import LogEntry, User, Vehicle
 from crud import create_log, get_vehicle_logs
+from uuid import UUID
 
 router = APIRouter(prefix="/logs", tags=["Логи"])
 
 # Получение автомобиля пользователя по vehicle_id и user_id
-async def get_vehicle_by_user(db: AsyncSession, user_id: int, vehicle_id: int):
+async def get_vehicle_by_user(db: AsyncSession, user_id: UUID, vehicle_id: UUID):
     result = await db.execute(
         select(Vehicle).where(Vehicle.id == vehicle_id, Vehicle.owner_id == user_id)
     )
@@ -71,7 +72,7 @@ async def get_all_logs(db: AsyncSession = Depends(get_session), current_user: Us
 
 # Получение логов для автомобилей пользователя
 @router.get("/{vehicle_id}", response_model=list[LogOut], summary="История машины", description="Возвращает все логи для выбранной машины")
-async def get_logs(vehicle_id: int, db: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user)):
+async def get_logs(vehicle_id: UUID, db: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user)):
     vehicle = await get_vehicle_by_user(db, current_user.id, vehicle_id)
 
     if not vehicle:

@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from database.database_app import get_session
 from models import DeliveryType
 from schemas.schemas import DeliveryTypeCreate, DeliveryTypeOut
+from uuid import UUID
 
 router = APIRouter(prefix="/delivery-types", tags=["Типы доставки"])
 
@@ -15,7 +16,7 @@ async def get_delivery_types(db: AsyncSession = Depends(get_session)):
 
 
 @router.get("/{delivery_type_id}", response_model=DeliveryTypeOut, summary="Получить тип доставки по ID")
-async def get_delivery_type(delivery_type_id: int, db: AsyncSession = Depends(get_session)):
+async def get_delivery_type(delivery_type_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(DeliveryType).where(DeliveryType.id == delivery_type_id))
     delivery_type = result.scalar_one_or_none()
     if not delivery_type:
@@ -34,7 +35,7 @@ async def create_delivery_type(delivery_type: DeliveryTypeCreate, db: AsyncSessi
 
 @router.put("/{delivery_type_id}", response_model=DeliveryTypeOut, summary="Обновить тип доставки")
 async def update_delivery_type(
-    delivery_type_id: int,
+    delivery_type_id: UUID,
     delivery_type: DeliveryTypeCreate,
     db: AsyncSession = Depends(get_session)
 ):
@@ -52,7 +53,7 @@ async def update_delivery_type(
 
 
 @router.delete("/{delivery_type_id}", summary="Удалить тип доставки")
-async def delete_delivery_type(delivery_type_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_delivery_type(delivery_type_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(DeliveryType).where(DeliveryType.id == delivery_type_id))
     db_type = result.scalar_one_or_none()
     if not db_type:

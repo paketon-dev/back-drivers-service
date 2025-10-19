@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from database.database_app import get_session
 from models import LegalEntityType
 from schemas.schemas import LegalEntityTypeCreate, LegalEntityTypeOut
+from uuid import UUID
 
 router = APIRouter(prefix="/legal-entities", tags=["Типы юридических лиц"])
 
@@ -15,7 +16,7 @@ async def get_legal_entities(db: AsyncSession = Depends(get_session)):
 
 
 @router.get("/{entity_id}", response_model=LegalEntityTypeOut, summary="Получить тип юр. лица по ID")
-async def get_legal_entity(entity_id: int, db: AsyncSession = Depends(get_session)):
+async def get_legal_entity(entity_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(LegalEntityType).where(LegalEntityType.id == entity_id))
     entity = result.scalar_one_or_none()
     if not entity:
@@ -33,7 +34,7 @@ async def create_legal_entity(entity: LegalEntityTypeCreate, db: AsyncSession = 
 
 
 @router.put("/{entity_id}", response_model=LegalEntityTypeOut, summary="Обновить тип юридического лица")
-async def update_legal_entity(entity_id: int, entity: LegalEntityTypeCreate, db: AsyncSession = Depends(get_session)):
+async def update_legal_entity(entity_id: UUID, entity: LegalEntityTypeCreate, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(LegalEntityType).where(LegalEntityType.id == entity_id))
     db_entity = result.scalar_one_or_none()
     if not db_entity:
@@ -48,7 +49,7 @@ async def update_legal_entity(entity_id: int, entity: LegalEntityTypeCreate, db:
 
 
 @router.delete("/{entity_id}", summary="Удалить тип юридического лица")
-async def delete_legal_entity(entity_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_legal_entity(entity_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(LegalEntityType).where(LegalEntityType.id == entity_id))
     db_entity = result.scalar_one_or_none()
     if not db_entity:

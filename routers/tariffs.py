@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from database.database_app import get_session
 from models import Tariff
 from schemas.schemas import TariffCreate, TariffOut
+from uuid import UUID
 
 router = APIRouter(prefix="/tariffs", tags=["Тарифы"])
 
@@ -15,7 +16,7 @@ async def get_tariffs(db: AsyncSession = Depends(get_session)):
 
 
 @router.get("/{tariff_id}", response_model=TariffOut, summary="Получить тариф по ID")
-async def get_tariff(tariff_id: int, db: AsyncSession = Depends(get_session)):
+async def get_tariff(tariff_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Tariff).where(Tariff.id == tariff_id))
     tariff = result.scalar_one_or_none()
     if not tariff:
@@ -33,7 +34,7 @@ async def create_tariff(tariff: TariffCreate, db: AsyncSession = Depends(get_ses
 
 
 @router.put("/{tariff_id}", response_model=TariffOut, summary="Обновить тариф")
-async def update_tariff(tariff_id: int, tariff: TariffCreate, db: AsyncSession = Depends(get_session)):
+async def update_tariff(tariff_id: UUID, tariff: TariffCreate, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Tariff).where(Tariff.id == tariff_id))
     db_tariff = result.scalar_one_or_none()
     if not db_tariff:
@@ -48,7 +49,7 @@ async def update_tariff(tariff_id: int, tariff: TariffCreate, db: AsyncSession =
 
 
 @router.delete("/{tariff_id}", summary="Удалить тариф")
-async def delete_tariff(tariff_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_tariff(tariff_id: UUID, db: AsyncSession = Depends(get_session)):
     result = await db.execute(select(Tariff).where(Tariff.id == tariff_id))
     db_tariff = result.scalar_one_or_none()
     if not db_tariff:

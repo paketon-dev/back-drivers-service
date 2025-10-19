@@ -12,22 +12,22 @@ services:
     networks:
       - drivers_network
 
-  drivers_db:
+  drivers_db_test:
     container_name: drivers_db_container
     image: postgres:15
     restart: always
     shm_size: 128mb
     volumes:
-      - drivers_db_data:/var/lib/postgresql/data
+      - drivers_db_data_test:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: delivery_system
+      POSTGRES_DB: delivery_systemm
     networks:
       - drivers_network
 
 volumes:
-  drivers_db_data:
+  drivers_db_data_test:
 
 networks:
   drivers_network:

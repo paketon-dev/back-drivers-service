@@ -4,7 +4,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, declarative_base
 import enum
-
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 Base = declarative_base()
 
 
@@ -12,7 +13,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     username = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
     first_name = Column(String, nullable=False)
@@ -20,8 +21,8 @@ class User(Base):
     middle_name = Column(String, nullable=True)
     rate = Column(Float, nullable=True)
     is_active = Column(Boolean, default=True)
-    transport_company_id = Column(Integer, ForeignKey("transport_companies.id"), nullable=True)
-    tariff_id = Column(Integer, ForeignKey("tariffs.id"), nullable=True)
+    transport_company_id = Column(UUID(as_uuid=True), ForeignKey("transport_companies.id"), nullable=True)
+    tariff_id = Column(UUID(as_uuid=True), ForeignKey("tariffs.id"), nullable=True)
 
     vehicles = relationship("Vehicle", back_populates="owner")
     transport_company = relationship("TransportCompany", back_populates="users")
@@ -33,7 +34,7 @@ class User(Base):
 class LegalEntityType(Base):
     __tablename__ = "legal_entity_types"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     name = Column(String, nullable=False)
 
     companies = relationship("TransportCompany", back_populates="legal_entity_type")
@@ -43,13 +44,13 @@ class LegalEntityType(Base):
 class TransportCompany(Base):
     __tablename__ = "transport_companies"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     name = Column(String, nullable=False)
     inn = Column(String, nullable=False)
     kpp = Column(String, nullable=True)
     contacts = Column(String, nullable=True)
 
-    legal_entity_type_id = Column(Integer, ForeignKey("legal_entity_types.id"))
+    legal_entity_type_id = Column(UUID(as_uuid=True), ForeignKey("legal_entity_types.id"))
 
     legal_entity_type = relationship("LegalEntityType", back_populates="companies")
     users = relationship("User", back_populates="transport_company")
@@ -59,11 +60,11 @@ class TransportCompany(Base):
 class Vehicle(Base):
     __tablename__ = "vehicles"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     plate_number = Column(String, unique=True, index=True)
     model = Column(String)
 
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     owner = relationship("User", back_populates="vehicles")
 
     logs = relationship("LogEntry", back_populates="vehicle")
@@ -84,8 +85,8 @@ class StatusEnum(str, enum.Enum):
 class LogEntry(Base):
     __tablename__ = "logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"))
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
+    vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"))
     status = Column(Enum(StatusEnum), default=StatusEnum.idle)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
@@ -98,7 +99,7 @@ class LogEntry(Base):
 class DeliveryType(Base):
     __tablename__ = "delivery_types"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     name = Column(String, nullable=False)
 
     routes = relationship("RoutePlan", back_populates="delivery_type")
@@ -115,13 +116,13 @@ class RouteStatusEnum(str, enum.Enum):
 class RoutePlan(Base):
     __tablename__ = "route_plans"
 
-    id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"))
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
+    vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"))
     date = Column(DateTime(timezone=True), default=datetime.utcnow)
     status = Column(Enum(RouteStatusEnum), default=RouteStatusEnum.planned)
     notes = Column(String, nullable=True)
 
-    delivery_type_id = Column(Integer, ForeignKey("delivery_types.id"), nullable=True)
+    delivery_type_id = Column(UUID(as_uuid=True), ForeignKey("delivery_types.id"), nullable=True)
     
     start_datetime = Column(DateTime(timezone=True), nullable=True)
     end_datetime = Column(DateTime(timezone=True), nullable=True)
@@ -129,6 +130,7 @@ class RoutePlan(Base):
     vehicle = relationship("Vehicle", back_populates="route_plans")
     delivery_type = relationship("DeliveryType", back_populates="routes")
     points = relationship("RoutePoint", back_populates="route_plan", cascade="all, delete-orphan")
+    loadings = relationship("Loading", back_populates="route_plan", cascade="all, delete-orphan")
 
 
 # ===================== Статусы точки маршрута =====================
@@ -138,13 +140,15 @@ class RoutePointStatusEnum(str, enum.Enum):
     arrived = "arrived"
     completed = "completed"
     skipped = "skipped"
+    loading = "loading"    
+    loading_completed = "loading_completed"    
 
 
 # ===================== Адрес =====================
 class Address(Base):
     __tablename__ = "addresses"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     address_1c = Column(String, nullable=False)
     country = Column(String, nullable=True)
     region = Column(String, nullable=True)
@@ -163,10 +167,10 @@ class Address(Base):
 class Store(Base):
     __tablename__ = "stores"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     uuid_1c = Column(String, nullable=False, unique=True)
     name_1c = Column(String, nullable=False)
-    address_id = Column(Integer, ForeignKey("addresses.id"))
+    address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"))
 
     address = relationship("Address", back_populates="stores")
     route_points = relationship("RoutePoint", back_populates="store")
@@ -176,8 +180,8 @@ class Store(Base):
 class RoutePoint(Base):
     __tablename__ = "route_points"
 
-    id = Column(Integer, primary_key=True, index=True)
-    route_plan_id = Column(Integer, ForeignKey("route_plans.id"))
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
+    route_plan_id = Column(UUID(as_uuid=True), ForeignKey("route_plans.id"))
     order = Column(Integer, nullable=False)
     doc = Column(String, nullable=True)
     payment = Column(Float, nullable=True)
@@ -190,8 +194,8 @@ class RoutePoint(Base):
     longitude = Column(Float, nullable=True)
     status = Column(Enum(RoutePointStatusEnum), default=RoutePointStatusEnum.planned)
 
-    address_id = Column(Integer, ForeignKey("addresses.id"), nullable=True)
-    store_id = Column(Integer, ForeignKey("stores.id"), nullable=True)
+    address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"), nullable=True)
+    store_id = Column(UUID(as_uuid=True), ForeignKey("stores.id"), nullable=True)
 
     route_plan = relationship("RoutePlan", back_populates="points")
     address = relationship("Address", back_populates="route_points")
@@ -209,8 +213,8 @@ class RoutePoint(Base):
 class RoutePointStatusLog(Base):
     __tablename__ = "route_point_status_logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    point_id = Column(Integer, ForeignKey("route_points.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
+    point_id = Column(UUID(as_uuid=True), ForeignKey("route_points.id"), nullable=False)
     status = Column(Enum(RoutePointStatusEnum), nullable=False)
     timestamp = Column(DateTime(timezone=True), default=datetime.utcnow)
     latitude = Column(Float, nullable=True)
@@ -224,7 +228,7 @@ class RoutePointStatusLog(Base):
 class Tariff(Base):
     __tablename__ = "tariffs"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     vehicle_type = Column(String, nullable=False)
     city = Column(String, nullable=True)
     unit = Column(String, nullable=True)
@@ -236,3 +240,65 @@ class Tariff(Base):
 
     users = relationship("User", back_populates="tariff")
 
+
+
+# ===================== Места загрузки =====================
+class LoadingPlace(Base):
+    __tablename__ = "loading_places"
+
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
+    uuid_1c = Column(String, nullable=True, unique=True) 
+    name = Column(String, nullable=False) 
+    address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"), nullable=False)
+
+    contact_name = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    work_hours = Column(String, nullable=True)
+    note = Column(String, nullable=True)
+
+    address = relationship("Address")
+    loadings = relationship("Loading", back_populates="loading_place")
+
+
+class Loading(Base):
+    __tablename__ = "loadings"
+
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)  # Уникальный идентификатор загрузки
+    route_plan_id = Column(UUID(as_uuid=True), ForeignKey("route_plans.id"), nullable=False)  # Ссылка на маршрут (RoutePlan)
+    loading_place_id = Column(UUID(as_uuid=True), ForeignKey("loading_places.id"), nullable=False)  # Ссылка на место загрузки (LoadingPlace)
+
+    start_time = Column(DateTime(timezone=True), nullable=True)  # Время начала загрузки
+    end_time = Column(DateTime(timezone=True), nullable=True)  # Время окончания загрузки
+    doc_number = Column(String, nullable=True)  # Номер накладной или документа 1С
+    volume = Column(Float, nullable=True)  # Объём груза
+    weight = Column(Float, nullable=True)  # Вес груза
+    note = Column(String, nullable=True)  # Примечание / комментарий
+
+    latitude = Column(Float, nullable=True)  # Геолокация: широта
+    longitude = Column(Float, nullable=True)  # Геолокация: долгота
+    status = Column(Enum(RoutePointStatusEnum), default=RoutePointStatusEnum.planned)  # Текущий статус загрузки
+
+    route_plan = relationship("RoutePlan", back_populates="loadings")
+    loading_place = relationship("LoadingPlace", back_populates="loadings")
+
+    status_logs = relationship(
+        "LoadingStatusLog",
+        back_populates="loading",
+        cascade="all, delete-orphan",
+        order_by="LoadingStatusLog.timestamp"
+    )
+
+
+# ===================== Лог статусов загрузки =====================
+class LoadingStatusLog(Base):
+    __tablename__ = "loading_status_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    loading_id = Column(UUID(as_uuid=True), ForeignKey("loadings.id"), nullable=False)
+    status = Column(Enum(RoutePointStatusEnum), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=datetime.utcnow)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    note = Column(String, nullable=True)
+
+    loading = relationship("Loading", back_populates="status_logs")
