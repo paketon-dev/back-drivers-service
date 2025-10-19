@@ -61,6 +61,8 @@ async def add_loading_to_route(
         weight=weight,
         note=note
     )
+    loading.changeDateTime = datetime.utcnow()
+
     db.add(loading)
     await db.commit()
     await db.refresh(loading)
@@ -141,6 +143,8 @@ async def update_loading(
         if v is not None and hasattr(loading, k):
             setattr(loading, k, v)
 
+    loading.changeDateTime = datetime.utcnow()
+    
     db.add(loading)
     await db.commit()
     await db.refresh(loading)

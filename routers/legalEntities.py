@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -43,6 +44,8 @@ async def update_legal_entity(entity_id: UUID, entity: LegalEntityTypeCreate, db
     for key, value in entity.dict().items():
         setattr(db_entity, key, value)
 
+    if hasattr(db_entity, "changeDateTime"):
+        db_entity.changeDateTime = datetime.utcnow()
     await db.commit()
     await db.refresh(db_entity)
     return db_entity

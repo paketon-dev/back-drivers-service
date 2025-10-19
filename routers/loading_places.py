@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -86,6 +87,7 @@ async def update_loading_place(
     if note is not None:
         place.note = note
 
+    place.changeDateTime = datetime.utcnow()
     db.add(place)
     await db.commit()
     await db.refresh(place)

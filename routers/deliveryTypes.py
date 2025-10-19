@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -46,6 +47,9 @@ async def update_delivery_type(
 
     for key, value in delivery_type.dict().items():
         setattr(db_type, key, value)
+
+    if hasattr(db_type, "changeDateTime"):
+        db_type.changeDateTime = datetime.utcnow()
 
     await db.commit()
     await db.refresh(db_type)

@@ -53,6 +53,7 @@ async def update_user(db: AsyncSession, user: UserUpdate):
     if user.tariff_id is not None:
         db_user.tariff_id = user.tariff_id
 
+    db_user.changeDateTime = datetime.utcnow()
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)

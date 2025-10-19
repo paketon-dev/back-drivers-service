@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -56,7 +57,7 @@ async def update_company(company_id: UUID, company: TransportCompanyCreate, db: 
 
     for key, value in company.dict().items():
         setattr(db_company, key, value)
-
+    db_company.changeDateTime = datetime.utcnow()
     await db.commit()
     await db.refresh(db_company)
     return db_company

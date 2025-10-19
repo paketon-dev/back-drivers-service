@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from datetime import datetime
+from fastapi import FastAPI, HTTPException, Query
 import httpx
 from pydantic import BaseModel
 from database.database_app import create_db_if_not_exists, create_tables
@@ -7,9 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import addresses, deliveryTypes, legalEntities, loading_places, loadings, stats, tariffs, transportCompanies, users, vehicles, logs, auth, trail, stores
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import delete
+from sqlalchemy import delete, or_, select
 from database.database_app import get_session
-from models import User, Vehicle, LogEntry, RoutePlan, RoutePoint, RoutePointStatusLog
+from models import Address, DeliveryType, LegalEntityType, Loading, LoadingPlace, LoadingStatusLog, RoutePointStatusEnum, RouteStatusEnum, StatusEnum, Store, Tariff, TransportCompany, User, Vehicle, LogEntry, RoutePlan, RoutePoint, RoutePointStatusLog
 
 
 create_db_if_not_exists()
@@ -206,3 +207,58 @@ async def clear_database(db: AsyncSession = Depends(get_session)):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка при очистке базы: {e}")
+
+
+
+
+
+@app.get("/get_changes", summary="Получить объекты, созданные или изменённые после даты")
+async def get_changes(
+    since: datetime = Query(..., description="Дата и время для фильтрации в формате 2025-10-19T10:00:00"),
+    db: AsyncSession = Depends(get_session)
+):
+    results = {}
+
+    models_to_check = {
+        "directories": { 
+            "users": User,
+            "vehicles": Vehicle,
+            "transport_companies": TransportCompany,
+            "addresses": Address,
+            "stores": Store,
+            "tariffs": Tariff,
+            "loading_places": LoadingPlace,
+        },
+        "static_directories": {  
+            "legal_entity_types": LegalEntityType,
+            "delivery_types": DeliveryType,
+            "status_enums": StatusEnum,
+            "route_status_enums": RouteStatusEnum,
+            "route_point_status_enums": RoutePointStatusEnum,
+        },
+        "documents": { 
+            "route_plans": RoutePlan,
+            "route_points": RoutePoint,
+            "loadings": Loading,
+            "log_entries": LogEntry,
+            "route_point_status_logs": RoutePointStatusLog,
+            "loading_status_logs": LoadingStatusLog,
+        }
+    }
+
+
+    for key, model in models_to_check.items():
+        query = await db.execute(
+            select(model).filter(
+                or_(
+                    model.createDateTime > since,
+                    model.changeDateTime > since
+                )
+            )
+        )
+        results[key] = [obj.__dict__ for obj in query.scalars().all()]
+
+        for obj in results[key]:
+            obj.pop("_sa_instance_state", None)
+
+    return results

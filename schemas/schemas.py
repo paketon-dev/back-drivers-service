@@ -37,6 +37,8 @@ class UserOut(BaseModel):
     rate: float
     transport_company_id: Optional[UUID] = None
     tariff_id: Optional[UUID] = None
+    createDateTime: datetime
+    changeDateTime: datetime
 
     class Config:
         orm_mode = True
@@ -52,6 +54,9 @@ class VehicleOut(BaseModel):
     id: UUID
     plate_number: str
     model: str
+    createDateTime: datetime
+    changeDateTime: datetime
+
     class Config:
         orm_mode = True
 
@@ -68,6 +73,9 @@ class LogOut(BaseModel):
     latitude: Optional[float]
     longitude: Optional[float]
     timestamp: datetime
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True
 
@@ -108,7 +116,9 @@ class AddressCreate(AddressBase):
 
 class AddressOut(AddressBase):
     id: UUID
-
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True
 
@@ -127,7 +137,9 @@ class StoreCreate(StoreBase):
 class StoreOut(StoreBase):
     id: UUID
     address: Optional[AddressOut] = None
-
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True
 
@@ -143,7 +155,9 @@ class DeliveryTypeCreate(DeliveryTypeBase):
 
 class DeliveryTypeOut(DeliveryTypeBase):
     id: UUID
-
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True
 
@@ -159,7 +173,9 @@ class LegalEntityTypeCreate(LegalEntityTypeBase):
 
 class LegalEntityTypeOut(LegalEntityTypeBase):
     id: UUID
-
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True
 
@@ -180,7 +196,9 @@ class TransportCompanyCreate(TransportCompanyBase):
 class TransportCompanyOut(TransportCompanyBase):
     id: UUID
     legal_entity_type: Optional[LegalEntityTypeOut] = None
-
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True
 
@@ -203,6 +221,8 @@ class TariffCreate(TariffBase):
 
 class TariffOut(TariffBase):
     id: UUID
-
+    createDateTime: datetime
+    changeDateTime: datetime
+    
     class Config:
         orm_mode = True

@@ -193,6 +193,7 @@ async def update_route_datetime(
         updated = True
     
     if updated:
+        route.changeDateTime = datetime.utcnow()
         db.add(route)
         await db.commit()
         await db.refresh(route)

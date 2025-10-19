@@ -8,9 +8,12 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID
 Base = declarative_base()
 
+class TimestampMixin:
+    createDateTime = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    changeDateTime = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 # ===================== Пользователь =====================
-class User(Base):
+class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -31,7 +34,7 @@ class User(Base):
     vehicles = relationship("Vehicle", back_populates="owner")
 
 # ===================== Тип юридического лица =====================
-class LegalEntityType(Base):
+class LegalEntityType(Base, TimestampMixin):
     __tablename__ = "legal_entity_types"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -41,7 +44,7 @@ class LegalEntityType(Base):
 
 
 # ===================== Транспортная компания =====================
-class TransportCompany(Base):
+class TransportCompany(Base, TimestampMixin):
     __tablename__ = "transport_companies"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -57,7 +60,7 @@ class TransportCompany(Base):
 
 
 # ===================== Транспортное средство =====================
-class Vehicle(Base):
+class Vehicle(Base, TimestampMixin):
     __tablename__ = "vehicles"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -82,7 +85,7 @@ class StatusEnum(str, enum.Enum):
 
 
 # ===================== Логи транспортных средств =====================
-class LogEntry(Base):
+class LogEntry(Base, TimestampMixin):
     __tablename__ = "logs"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -96,7 +99,7 @@ class LogEntry(Base):
 
 
 # ===================== Тип доставки =====================
-class DeliveryType(Base):
+class DeliveryType(Base, TimestampMixin):
     __tablename__ = "delivery_types"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -113,7 +116,7 @@ class RouteStatusEnum(str, enum.Enum):
 
 
 # ===================== План маршрута =====================
-class RoutePlan(Base):
+class RoutePlan(Base, TimestampMixin):
     __tablename__ = "route_plans"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -145,7 +148,7 @@ class RoutePointStatusEnum(str, enum.Enum):
 
 
 # ===================== Адрес =====================
-class Address(Base):
+class Address(Base, TimestampMixin):
     __tablename__ = "addresses"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -164,7 +167,7 @@ class Address(Base):
 
 
 # ===================== Магазин =====================
-class Store(Base):
+class Store(Base, TimestampMixin):
     __tablename__ = "stores"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -177,7 +180,7 @@ class Store(Base):
 
 
 # ===================== Точка маршрута =====================
-class RoutePoint(Base):
+class RoutePoint(Base, TimestampMixin):
     __tablename__ = "route_points"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -210,7 +213,7 @@ class RoutePoint(Base):
 
 
 # ===================== Лог статусов точки маршрута =====================
-class RoutePointStatusLog(Base):
+class RoutePointStatusLog(Base, TimestampMixin):
     __tablename__ = "route_point_status_logs"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -225,7 +228,7 @@ class RoutePointStatusLog(Base):
 
 
 # ===================== Тарифы =====================
-class Tariff(Base):
+class Tariff(Base, TimestampMixin):
     __tablename__ = "tariffs"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -243,7 +246,7 @@ class Tariff(Base):
 
 
 # ===================== Места загрузки =====================
-class LoadingPlace(Base):
+class LoadingPlace(Base, TimestampMixin):
     __tablename__ = "loading_places"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
@@ -260,7 +263,7 @@ class LoadingPlace(Base):
     loadings = relationship("Loading", back_populates="loading_place")
 
 
-class Loading(Base):
+class Loading(Base, TimestampMixin):
     __tablename__ = "loadings"
 
     id = Column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)  # Уникальный идентификатор загрузки
@@ -290,7 +293,7 @@ class Loading(Base):
 
 
 # ===================== Лог статусов загрузки =====================
-class LoadingStatusLog(Base):
+class LoadingStatusLog(Base, TimestampMixin):
     __tablename__ = "loading_status_logs"
 
     id = Column(Integer, primary_key=True, index=True)

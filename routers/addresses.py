@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -42,6 +43,9 @@ async def update_address(address_id: UUID, address: AddressCreate, db: AsyncSess
 
     for key, value in address.dict().items():
         setattr(db_address, key, value)
+
+    if hasattr(db_address, "changeDateTime"):
+        db_address.changeDateTime = datetime.utcnow()
 
     db.add(db_address)
     await db.commit()

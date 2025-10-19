@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -43,6 +44,7 @@ async def update_store(store_id: UUID, store: StoreCreate, db: AsyncSession = De
         raise HTTPException(status_code=404, detail="Магазин не найден")
     for key, value in store.dict().items():
         setattr(db_store, key, value)
+    db_store.changeDateTime = datetime.utcnow()
     await db.commit()
     await db.refresh(db_store)
     return db_store
