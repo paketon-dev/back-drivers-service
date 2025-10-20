@@ -44,3 +44,15 @@ async def get_user(user_id: UUID, db: AsyncSession = Depends(get_session)):
 @router.patch("/{user_id}", response_model=UserOut, summary="Редактировать пользователя", description="Редактирует данные пользователя по ID")
 async def update_user_endpoint( user: UserUpdate, db: AsyncSession = Depends(get_session)):
     return await update_user(db, user)
+
+
+@router.delete("/{user_id}", summary="Удалить пользователя", description="Удаление пользователя по ID")
+async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_session)):
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    await db.delete(user)
+    await db.commit()
+    return None

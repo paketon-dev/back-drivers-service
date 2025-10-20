@@ -25,19 +25,19 @@ async def get_user_vehicle(db: AsyncSession, user_id: UUID) -> Vehicle | None:
     return result.scalars().first()
 
 
-# Создать маршрут на день для автомобиля пользователя
-@router.post("/", summary="Создать маршрут на день")
+@router.post("/", summary="Создать маршрут на день (админ)")
 async def create_route(
     date: date = Query(..., description="Дата маршрута"),
     notes: str | None = None,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    user_id: str = Query(..., description="ID водителя"),
 ):
-    vehicle = await get_user_vehicle(db, current_user.id)
+    vehicle = await get_user_vehicle(db, user_id)
     if not vehicle:
-        raise HTTPException(status_code=403, detail="У вас нет автомобилей для создания маршрута")
+        raise HTTPException(status_code=403, detail="Нет автомобилей для создания маршрута")
     
     return await create_route_plan(db, vehicle.id, date, notes)
+
 
 from sqlalchemy.orm import selectinload
 
@@ -254,7 +254,11 @@ async def get_all_routes(
         selectinload(RoutePlan.vehicle)
         .selectinload(Vehicle.owner),
         selectinload(RoutePlan.points)
-        .selectinload(RoutePoint.address) 
+        .selectinload(RoutePoint.address),
+        selectinload(RoutePlan.loadings)
+        .selectinload(Loading.loading_place)
+        .selectinload(LoadingPlace.address),
+        selectinload(RoutePlan.loadings)
     )
 
     if start_date:
@@ -565,7 +569,7 @@ async def get_today_route(
     result = await db.execute(
         select(RoutePlan)
         .join(RoutePlan.vehicle)
-        .where(RoutePlan.date == date.today(), RoutePlan.vehicle.has(owner_id=current_user.id))
+        # .where(RoutePlan.date == date.today(), RoutePlan.vehicle.has(owner_id=current_user.id))
         .options(
             selectinload(RoutePlan.points).selectinload(RoutePoint.address),
             selectinload(RoutePlan.vehicle)
@@ -863,6 +867,68 @@ async def get_route_point_logs(
 
 
 
+from pydantic import BaseModel
+
+class MoveRoutePointsRequest(BaseModel):
+    point_ids: List[UUID]      
+    target_route_id: UUID        
+
+
+
+
+@router.delete("/route_plans/{route_plan_id}", summary="Удалить маршрут и все его точки/загрузки")
+async def delete_route_plan(route_plan_id: str, db: AsyncSession = Depends(get_session)):
+    query = await db.execute(select(RoutePlan).where(RoutePlan.id == route_plan_id))
+    route_plan = query.scalar_one_or_none()
+    if not route_plan:
+        raise HTTPException(status_code=404, detail="Маршрут не найден")
+
+    await db.delete(route_plan)
+    await db.commit()
+    return {"status": "success", "message": f"Маршрут {route_plan_id} удален"}
+
+
+
+@router.delete("/route_points/{point_id}", summary="Удалить точку маршрута")
+async def delete_route_point(point_id: str, db: AsyncSession = Depends(get_session)):
+    query = await db.execute(select(RoutePoint).where(RoutePoint.id == point_id))
+    point = query.scalar_one_or_none()
+    if not point:
+        raise HTTPException(status_code=404, detail="Точка маршрута не найдена")
+
+    await db.delete(point)
+    await db.commit()
+    return {"status": "success", "message": f"Точка {point_id} удалена"}
+
+
+@router.post("/route_points/relocate", summary="Переместить точки из одного маршрута в другой")
+async def relocate_route_points(
+    point_ids: list[str],
+    new_route_plan_id: str,
+    db: AsyncSession = Depends(get_session)
+):
+    # Проверка нового маршрута
+    query = await db.execute(select(RoutePlan).where(RoutePlan.id == new_route_plan_id))
+    new_route = query.scalar_one_or_none()
+    if not new_route:
+        raise HTTPException(status_code=404, detail="Новый маршрут не найден")
+
+    # Получение точек
+    query = await db.execute(select(RoutePoint).where(RoutePoint.id.in_(point_ids)))
+    points = query.scalars().all()
+    if not points:
+        raise HTTPException(status_code=404, detail="Точки маршрута не найдены")
+
+    # Переложение точек
+    for point in points:
+        point.route_plan_id = new_route_plan_id
+    await db.commit()
+
+    return {"status": "success", "message": f"{len(points)} точек перемещено на маршрут {new_route_plan_id}"}
+
+
+
+
 
 
 
@@ -956,7 +1022,7 @@ from datetime import datetime
 
 import httpx
 from fastapi import HTTPException
-from pydantic import BaseModel
+
 from fastapi import HTTPException, UploadFile, File, Form, Depends
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -1152,9 +1218,85 @@ async def upload_excel(
         doc_value = safe_str(row.get("Документ"))
         address_value = safe_str(row.get("Торговая точка"))
 
-        coords = await get_coordinates_by_address(address_value)
-        latitude = coords.lat if coords else None
-        longitude = coords.lng if coords else None
+        existing_point_res = await db.execute(
+            select(RoutePoint).filter(RoutePoint.doc == doc_value, RoutePoint.route_plan_id == route_id)
+        )
+
+        address_obj = await get_or_create_address(db, address_value)
+
+        existing_point = existing_point_res.scalars().first()
+
+        if existing_point:
+            existing_point.payment = row.get("Сумма документа", 0) or 0
+            existing_point.counterparty = safe_str(row.get("Контрагент"))
+            existing_point.address = address_obj
+            existing_point.order = order_value
+            existing_point.note = safe_str(row.get("Комментарий"))
+            
+            existing_point.latitude = address_obj.latitude
+            existing_point.longitude = address_obj.longitude
+
+            db.add(existing_point)
+        else:
+            await add_route_point(
+                db,
+                route_plan_id=route_id,
+                doc=doc_value,
+                payment=row.get("Сумма документа", 0) or 0,
+                counterparty=safe_str(row.get("Контрагент")),
+                address_obj=address_obj,
+                order=order_value,
+                note=safe_str(row.get("Комментарий")),
+            )
+
+    excel_docs = df["Документ"].apply(str).unique()
+    existing_points_res = await db.execute(
+        select(RoutePoint).filter(
+            RoutePoint.route_plan_id == route_id,
+            RoutePoint.doc.notin_(excel_docs)
+        )
+    )
+    points_to_delete = existing_points_res.scalars().all()
+    for point in points_to_delete:
+        db.delete(point)
+
+    await db.commit()
+
+    return {"detail": f"Файл успешно обработан, загружено {len(df)} строк"}
+
+
+
+
+
+@router.post("/upload_excel_test", summary="Загрузить Excel файл с точками маршрута")
+async def upload_excel(
+    route_date: datetime = Form(...), 
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_session),
+    idUser: UUID = Form(...)
+):
+    df = parse_excel(file)
+    df.columns = df.columns.str.strip()
+
+    for index, row in df.iterrows():
+        driver_name = str(row.get("Водитель", "")).strip()
+        if not driver_name:
+            raise HTTPException(status_code=400, detail=f"Пустое имя водителя в строке {index+1}")
+
+        parts = driver_name.split()
+        last_name = parts[0] if len(parts) > 0 else None
+        first_name = parts[1] if len(parts) > 1 else None
+        middle_name = parts[2] if len(parts) > 2 else None
+
+        driver_id = idUser
+        await get_or_create_vehicle(db, driver_id)
+
+        order_value = row.get("Порядок", index + 1)
+        route = await get_or_create_route_for_date(db, driver_id, route_date)
+        route_id = route.id
+
+        doc_value = safe_str(row.get("Документ"))
+        address_value = safe_str(row.get("Торговая точка"))
 
         existing_point_res = await db.execute(
             select(RoutePoint).filter(RoutePoint.doc == doc_value, RoutePoint.route_plan_id == route_id)
@@ -1171,8 +1313,8 @@ async def upload_excel(
             existing_point.order = order_value
             existing_point.note = safe_str(row.get("Комментарий"))
             
-            existing_point.latitude = latitude if latitude else address_obj.latitude
-            existing_point.longitude = longitude if longitude else address_obj.longitude
+            existing_point.latitude = address_obj.latitude
+            existing_point.longitude = address_obj.longitude
 
             db.add(existing_point)
         else:
