@@ -569,7 +569,7 @@ async def get_today_route(
     result = await db.execute(
         select(RoutePlan)
         .join(RoutePlan.vehicle)
-        .where(RoutePlan.date == date.today(), RoutePlan.vehicle.has(owner_id=current_user.id))
+        # .where(RoutePlan.date == date.today(), RoutePlan.vehicle.has(owner_id=current_user.id))
         .options(
             selectinload(RoutePlan.points).selectinload(RoutePoint.address),
             selectinload(RoutePlan.vehicle)

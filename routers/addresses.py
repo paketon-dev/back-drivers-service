@@ -71,16 +71,19 @@ from fastapi import UploadFile, File, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import io
+
+
 @router.post("/bulk-upload", summary="Загрузить адреса из Excel файла")
 async def bulk_upload_addresses(
     file: UploadFile = File(..., description="Excel файл с колонками: address_1c, latitude, longitude"),
     db: AsyncSession = Depends(get_session)
 ):
-    # Проверяем расширение файла
+
     if not file.filename.endswith(('.xlsx', '.xls')):
         raise HTTPException(status_code=400, detail="Файл должен быть в формате Excel (.xlsx или .xls)")
     
     try:
+
         # Читаем файл в память
         contents = await file.read()
         df = pd.read_excel(io.BytesIO(contents))
@@ -97,6 +100,7 @@ async def bulk_upload_addresses(
         df = df.dropna(subset=['address_1c'])
         
         # Получаем существующие адреса для проверки дубликатов
+
         result = await db.execute(select(Address.address_1c))
         existing_addresses = {row[0] for row in result.fetchall()}
         
@@ -108,6 +112,7 @@ async def bulk_upload_addresses(
             address_1c = str(row['address_1c']).strip()
             if not address_1c:
                 continue
+
             if address_1c in existing_addresses:
                 duplicate_addresses_count += 1
                 continue
@@ -119,6 +124,7 @@ async def bulk_upload_addresses(
             }
             addresses_to_create.append(Address(**address_data))
             existing_addresses.add(address_1c)
+
             new_addresses_count += 1
         
         if addresses_to_create:
