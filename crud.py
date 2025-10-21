@@ -10,22 +10,37 @@ from uuid import UUID
 
 # USERS
 async def create_user(db: AsyncSession, user: UserCreate):
+    # Проверяем, существует ли пользователь с таким username
     existing_user = await db.execute(select(User).filter(User.username == user.username))
     existing_user = existing_user.scalar_one_or_none()
 
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already taken")
 
-    db_user = User(    username=user.username,
-    hashed_password=get_password_hash(user.password),
-    first_name=user.first_name,
-    last_name=user.last_name,
-    middle_name=user.middle_name,
-    rate=user.rate,
-    is_active=True )
+    # Создаём пользователя
+    db_user = User(
+        username=user.username,
+        hashed_password=get_password_hash(user.password),
+        first_name=user.first_name,
+        last_name=user.last_name,
+        middle_name=user.middle_name,
+        rate=user.rate,
+        is_active=True
+    )
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
+
+    db_vehicle = Vehicle(
+        owner_id = db_user.id, 
+        model = "Не указана",
+        plate_number = str(db_user.id),   
+    )
+    db.add(db_vehicle)
+    await db.commit()
+    await db.refresh(db_vehicle)
+
+    # Можно вернуть пользователя с машиной, если нужно
     return db_user
 
 

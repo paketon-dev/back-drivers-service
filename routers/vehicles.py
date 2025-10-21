@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.database_app import get_session
-from models import User
+from models import User, Vehicle
 from routers.auth import get_current_user
 from schemas.schemas import VehicleCreate, VehicleOut, LogCreate, LogOut
 from crud import create_vehicle, create_log, get_vehicle_logs
@@ -19,6 +20,15 @@ async def add_vehicle(vehicle: VehicleCreate, db: AsyncSession = Depends(get_ses
 async def add_vehicle_for_user(user_id: UUID, vehicle: VehicleCreate, db: AsyncSession = Depends(get_session)):
     return await create_vehicle(db, user_id, vehicle)
 
+@router.get("/{user_id}",  summary="Получить данные водителя по ID")
+async def get_user_by_id(user_id: UUID, db: AsyncSession = Depends(get_session)):
+    result = await db.execute(select(Vehicle).where(Vehicle.owner_id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    return user
 
 # Добавление лога для автомобиля
 @router.post("/{vehicle_id}/logs", response_model=LogOut)

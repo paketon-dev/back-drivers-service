@@ -26,7 +26,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],  
 )
 
@@ -44,15 +44,6 @@ app.include_router(transportCompanies.router)
 app.include_router(tariffs.router)
 app.include_router(loading_places.router)
 app.include_router(loadings.router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
-)
-
 
 # Определение модели для ответа
 class GeocodeResponse(BaseModel):
