@@ -218,8 +218,26 @@ def dict_keys_to_camel_case(obj):
         return new_obj
     else:
         return obj
+    
+def snake_to_pascal(snake_str: str) -> str:
+    """Преобразует 'snake_case' → 'PascalCase'."""
+    if not isinstance(snake_str, str):
+        return snake_str  # защита от неожиданных типов
+    components = [comp for comp in snake_str.split('_') if comp]
+    return ''.join(comp.capitalize() for comp in components)
 
 
+def dict_keys_to_pascal_case(obj):
+    """Рекурсивно преобразует ключи словарей из snake_case в PascalCase."""
+    if isinstance(obj, list):
+        return [dict_keys_to_pascal_case(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {
+            snake_to_pascal(key): dict_keys_to_pascal_case(value)
+            for key, value in obj.items()
+        }
+    else:
+        return obj
 @app.get("/get_changes", summary="Получить объекты, созданные или изменённые после даты")
 async def get_changes(
     since: datetime,
@@ -235,9 +253,9 @@ async def get_changes(
             "Addresses": Address,
             "Stores": Store,
             "Tariffs": Tariff,
-            "Loading_places": LoadingPlace,
+            "LoadingPlaces": LoadingPlace,
         },
-        "Static_directories": {  
+        "StaticDirectories": {  
             "LegalEntityTypes": LegalEntityType,
             "DeliveryTypes": DeliveryType
         },
@@ -265,7 +283,8 @@ async def get_changes(
             objs = [obj.__dict__ for obj in query.scalars().all()]
             for obj in objs:
                 obj.pop("_sa_instance_state", None)
-            results[section_name][model_name] = dict_keys_to_camel_case(objs)
+            # ПРАВИЛЬНО:
+            results[section_name][model_name] = dict_keys_to_pascal_case(objs)
             
 
     return results

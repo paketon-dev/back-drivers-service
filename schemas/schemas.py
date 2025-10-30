@@ -186,7 +186,7 @@ class TransportCompanyBase(BaseModel):
     inn: str
     kpp: Optional[str] = None
     contacts: Optional[str] = None
-    legal_entity_type_id: Optional[int] = None
+    legal_entity_type_id: Optional[UUID] = None
 
 
 class TransportCompanyCreate(TransportCompanyBase):
